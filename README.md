@@ -4,10 +4,14 @@ difference imaging.
 ## Installation
 Simply clone and install using pip:
 ```
-  git clone git@gitlab.epfl.ch:dux/diffpanstarrs.git
+  git clone git@github.com:duxfrederic/diffpanstarrs.git
   cd diffpanstarrs
   pip install .
 ```
+or simply install from the repositories:
+```
+  pip install diffpanstarrs
+``` 
 Requires python ≥ 3.7.
 
 One must also have a working installation of sextractor. For now, sextractor must
