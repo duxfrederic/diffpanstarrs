@@ -444,11 +444,5 @@ def logChi2AndSeeing(outdir, diffimgfile, chi2, seeing):
             f.writelines(line)
     return 0
 
-
-if __name__ == "__main__":
-    from glob import glob 
-    datadir = "/home/fred/stuff/*diff.fits"
-    files = glob(datadir)
-    result = weightedMedianImage(files, False, 'toast.fits')
     
     

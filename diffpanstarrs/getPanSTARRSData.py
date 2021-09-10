@@ -9,8 +9,7 @@ Created on Mon Nov 11 08:59:18 2019
 import  urllib3
 import  wget
 from    time                       import  time
-from    os.path                    import  join, exists, dirname
-from    shutil                     import  move 
+from    os.path                    import  join, exists
 from    os                         import  makedirs, remove
 from    multiprocessing            import  Pool
 from    subprocess                 import  call

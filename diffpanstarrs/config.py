@@ -43,3 +43,7 @@ class Config():
     nprocessesdownload = min(os.cpu_count(), 10)
 
 config = Config()
+
+if not config.debug:
+    # while we're at it, let us suppress the useless tensorflow output:
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 

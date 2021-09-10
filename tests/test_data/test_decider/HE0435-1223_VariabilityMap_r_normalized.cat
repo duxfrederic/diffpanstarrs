@@ -1,8 +1,0 @@
-#   1 FLUX_ISO               Isophotal flux                                             [count]
-#   2 XWIN_IMAGE             Windowed position estimate along x                         [pixel]
-#   3 YWIN_IMAGE             Windowed position estimate along y                         [pixel]
-#   4 A_IMAGE                Profile RMS along major axis                               [pixel]
-#   5 B_IMAGE                Profile RMS along minor axis                               [pixel]
-0.0006141386     36.5224     43.5527     1.527     1.232
- 0.000937846     40.0373     38.4441     2.629     1.640
-  0.00198189     44.7897     42.6277     3.340     1.772
