@@ -7,7 +7,7 @@ Created on Tue Nov  5 08:39:47 2019
 """
 
 from    glob                      import   glob
-from    os.path                   import   join, basename
+from    os.path                   import   join
 import  numpy                     as       np
 import  matplotlib.pyplot         as       plt
 from    matplotlib.widgets        import   Slider

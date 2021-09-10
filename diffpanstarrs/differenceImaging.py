@@ -13,10 +13,9 @@ import   astropy.io.fits        as      fits
 import   matplotlib.pyplot      as      plt
 
 
-from    diffpanstarrs.utilities     import  cropToCenter, getMagnitudes, clip,\
+from    diffpanstarrs.utilities     import  cropToCenter, getMagnitudes,\
                                             loadPanSTARRSauxiliary, logChi2AndSeeing,\
                                             openCatFile
-from    diffpanstarrs.moffatRemoval import  removeMoffatProfile
 
 
 def buildStarMask(segfilepath, catfilepath, magnitude_threshold, mask_background=True,
@@ -152,27 +151,6 @@ def differenceImaging(infile, refarray, refarraystd, outdir, magnitude_threshold
         # the panstarrs server.
         targetmask, targetstd = loadPanSTARRSauxiliary(targetpath, mask_outset=-2)
         targetstd_copy = targetstd.copy()
-        # now, if there are stars to remove, do it here:
-        ### TODO : put that elsewhere
-        # if removecontaminants:
-            # removeMoffatProfile(target, targetstd, targetmask, lim, *closestars)
-
-        # now, for the following to make sense we would need to blur the
-        # refarray noise map with the result. And that would be an 
-        # iterative procedure since the likelihood function would be updated
-        # as well.
-        ## if not refarraystd is None:
-            ## targetstd = np.sqrt(targetstd**2 + refarraystd**2)
-        """
-        # instead, we just try to rescale the noise map of the image to be processed
-        # s.t. it includes the reference at the 0th order:
-        refbckmed, refbckstd = clip(refarraystd[~np.isnan(refarraystd)], 5)
-        tarbckmed, targckstd = clip(targetstd[~np.isnan(targetstd)], 5)
-        # we just rescale everything by what's in the background in the reference
-        # and the target:
-        targetstd    = targetstd / (refbckstd/refbckmed) * (targckstd/tarbckmed)
-        targetstd = np.sqrt(targetstd**2 + targetstd**2)
-        """
 
             
             

@@ -94,7 +94,12 @@ class DiffImgResult():
         fitspath = join(self.outdir, self.name +'_VariabilityMap_{channel}.fits')
         files = []
         for channel in channels:
+            if not channel in self.channels:
+                print(f"  {channel} not available in this analysis")
+                continue
             files  += recallDiffImgs(self.outdir, channel)
+        if len(files) == 0:
+            raise Exception("No image available to build a variability map.")
         chi2s, seeings = zip(*[recallChi2AndSeeing(self.outdir, file) for file in files])
         chi2s, seeings = np.array(chi2s), np.array(seeings)
         # here, implement an heuristic that chooses the best map every night.
@@ -157,7 +162,8 @@ class DiffImgResult():
         self._plotImg(channels, crop, removenan, directory=self.outdir,\
                       absolutesum=True, savename=savename, headless=headless)
 
-    def plotOriginals(self, channels, crop=False, removenan=False, savename=''):
+    def plotOriginals(self, channels, crop=False, removenan=False, savename='',
+                      headless=False):
         """
             plots the requested channels of the downloaded data.
 
@@ -178,9 +184,9 @@ class DiffImgResult():
         if not channels:
              channels = self.channels
         self._plotImg(channels, crop, removenan, directory=self.workdir,\
-                      absolutesum=False, savename=savename)
+                      absolutesum=False, savename=savename, headless=headless)
 
-    def score(self):
+    def lensedQuasarScore(self):
         varscores, medianscores = {}, {}
         if len(self.varimagesnormfiles) == 0:
             print("No variability maps generated yet.")
@@ -192,7 +198,7 @@ class DiffImgResult():
         else:
             for channel, fitspath in self.medianimagesfiles.items():
                 medianscores[channel] = decide(fitspath)
-        return varscores, medianscores
+        return {"varmapscore":varscores, "medianimagescore":medianscores}
 
     def _plotImg(self, channels, crop, removenan, directory, absolutesum,
                  savename, headless):
@@ -340,10 +346,7 @@ def doDifferenceImagingPanSTARRS(sourcedir, name, kernel_size, object_extent,
             dim[~mask] = np.nan
             refarraystack.append(im)
             refarraywtstack.append(dim)
-            # refarraystack = [fits.open(image)[0].data for image in reffiles[:j]]
-            # refarraywt    = [fits.open(image.replace('.fits', '.wt.fits'))[0].data for image in reffiles[:j]]
-            # convert the variance to std in the next line too:
-            # refarraystack, refarraywt = np.array(refarraystack), np.array(refarraywt)
+            
             partition     = np.nansum(1/np.array(refarraywtstack), axis=0) 
             nperpixel     = np.sum(~np.isnan(refarraystack), axis=0)
             refarray      = np.nansum(np.array(refarraystack)/np.array(refarraywtstack), axis=0) / partition
@@ -357,19 +360,6 @@ def doDifferenceImagingPanSTARRS(sourcedir, name, kernel_size, object_extent,
             
         intensities = {}
         
-        # we have a reference image and noise map. We can now check for
-        # contaminants in the vicinity of the lens (in the center):
-        # TODO : put that elsewhere
-        # if removecontaminants:
-        #     catfile, segfile = catsegfiles[reffiles[0]]
-        #     segmap = fits.open(segfile)[0].data
-        #     xcont, ycont, dists, id_star_cont = findCloserThanSeeing(catfile, max(seeings), 
-        #                                                              refarray.shape[0], n=3)
-        #     removeMoffatProfile(refarray, std, segmap, 1*max(seeings),
-        #                         xcont=xcont, ycont=ycont, id_star_cont=id_star_cont)
-        #     closestars = [xcont, ycont, id_star_cont]
-        # else:
-        #     closestars = None
 
         # difference image each image in the set with respect to the reference:
         for image in images:
@@ -385,6 +375,7 @@ def doDifferenceImagingPanSTARRS(sourcedir, name, kernel_size, object_extent,
                                                        plotintermediate=debug)
 
                 intensities[image] =  difftot, tot, chi2
+                
             except Exception as e:
                 import traceback
                 print('\033[91m')
@@ -392,6 +383,7 @@ def doDifferenceImagingPanSTARRS(sourcedir, name, kernel_size, object_extent,
                 print(e)
                 print('\033[0m')
                 intensities[image] = np.nan, np.nan, np.nan
+                
         # book keeping:
         saveIntensities(intensities, saved_csv_name=tosave_csv)
         result.light_curve_paths[channel] = tosave_csv
