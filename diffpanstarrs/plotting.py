@@ -124,7 +124,7 @@ def plotThisDirectory(path, pattern="", crop=False, removenan=False, absolutesum
         # weights = np.array([1/clip(image[~np.isnan(image)], 5)[1] for image in images])
         # image   = np.nansum(weights[:,np.newaxis, np.newaxis]*np.array(images), axis=0)
         # image = np.nansum(images, axis=0)
-        image = makeAbsoluteStackOfDiffImg(ListOfFiles, crop)
+        image, _ = makeAbsoluteStackOfDiffImg(ListOfFiles, crop)
         plt.imshow(image, origin='lower')
         plt.xticks([])
         plt.yticks([])

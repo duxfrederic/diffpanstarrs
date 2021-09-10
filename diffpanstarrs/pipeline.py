@@ -204,6 +204,7 @@ class DiffImgResult():
         for channel in channels:
             if not channel in self.channels:
                 print(f"  {channel} not available in this analysis")
+                continue
             plotThisDirectory(directory, pattern=f".{channel}.", crop=crop,
                               removenan=removenan, absolutesum=absolutesum,
                               savename=savename, headless=headless)
