@@ -1,6 +1,7 @@
 # diffpanstarrs
-A small utility package to download and process Pan-STARRS data in the sense of
+A package implementing a pipeline to download and process Pan-STARRS data in the sense of
 difference imaging.
+
 ## Installation
 Simply clone and install using pip:
 ```
@@ -8,17 +9,18 @@ Simply clone and install using pip:
   cd diffpanstarrs
   pip install .
 ```
-or simply install from the repositories:
+or simply install it from the PyPI repositories:
 ```
   pip install diffpanstarrs
-``` 
+```
 Requires python ≥ 3.7.
 
 One must also have a working installation of sextractor. For now, sextractor must
-be set in the path under the aliases `sex` or `sextractor`.
+be set in the path under the aliases `sex`, `sextractor` or `source-extractor`.
+(This alias and more settings can be accessed in `diffpanstarrs/config.py`.)
 
 ## Usage
-See the example in `tests/test_simple_download_and_process.py`:
+The `downloadAndProcess` function contains the difference imaging pipeline:
 ```python
 from diffpanstarrs import downloadAndProcess
 
@@ -30,9 +32,18 @@ res = downloadAndProcess(RA=69.5619,
                          workdir='myworkdir',
                          name="HE0435-1223",
                          channels=['g'])
-# plot the light curves:
+```
+
+It returns a `DiffImgResult` object which can be used to explore the stack of difference images:
+
+```python
+# plot the light curve for each processed channel:
 res.plotCurves()
 # plot the difference images and variability image:
 res.plotDiffImg(crop=30)
 
+# this one is specialized to the task of finding lensed quasars
+# through their extended variability:
+print(res.lensedQuasarScore())
 ```
+
