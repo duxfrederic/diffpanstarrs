@@ -105,9 +105,11 @@ class DiffImgResult():
         # here, implement an heuristic that chooses the best map every night.
         try:
             filesg = chooseBestImgPerNight(files)
+            print(f"     saving a variability map using {len(filesg)} out of {len(files)} files.")
         except FileNotFoundError:
-            filesg = ['no files']
-        print(f"     saving a variability map using {len(filesg)} out of {len(files)} files.")
+            print("      No file with the right criteria found to build the varmap.")
+            return "", ""
+        
         channel = ''.join(channels)
         outfits = fitspath.format(channel=channel)
         outfits = join(dirname(outfits), extra+basename(outfits))

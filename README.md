@@ -41,9 +41,12 @@ It returns a `DiffImgResult` object which can be used to explore the stack of di
 res.plotCurves()
 # plot the difference images and variability image:
 res.plotDiffImg(crop=30)
+# save the variability images:
+res.saveVariabilityImages()
 
 # this one is specialized to the task of finding lensed quasars
-# through their extended variability:
+# through their extended variability in the saved
+# variability image:
 print(res.lensedQuasarScore())
 ```
 

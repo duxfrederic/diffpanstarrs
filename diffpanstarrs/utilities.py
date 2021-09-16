@@ -69,11 +69,13 @@ def chooseBestImgPerNight(files: list):
         sorting = np.argsort(seeings)
         seeings, chi2s, nightfiles = np.array(seeings)[sorting], np.array(chi2s)[sorting], np.array(nightfiles)[sorting]
         for seeing, chi2, file in zip(seeings, chi2s, nightfiles):
-            if chi2 < 1.5 and seeing < 6 and seeing > 4:
+            if chi2 > 1e-2 and chi2 < 1.5 and seeing < 6 and seeing > 4:
                 chosenfiles.append(file)
                 break 
         else:
             chosenfiles.append(nightfiles[np.argmin(chi2)])
+    if len(chosenfiles) == 0:
+        raise FileNotFoundError("No image with the right criteria found.")
     return chosenfiles
         
             
