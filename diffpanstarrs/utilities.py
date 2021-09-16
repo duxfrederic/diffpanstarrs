@@ -14,10 +14,21 @@ from    scipy.ndimage          import  binary_erosion, binary_dilation
 from    astropy.io             import  fits
 from    astropy.nddata.utils   import  Cutout2D
 from    astropy                import  wcs as astropywcs
-import  robustats
 
 from    diffpanstarrs.config   import  config
 
+
+
+def weightedMedian(array1D, weights1D):
+    """ calculating the median of an array array1D weighted by some
+        weights weights1D """
+    sort      = np.argsort(array1D)
+    sarray    = array1D[sort]
+    sweights  = weights1D[sort]
+    cumul     = np.cumsum(sweights)
+    centered  = (cumul - 0.5 * sweights) / cumul[-1]
+
+    return np.interp(0.5, centered, sarray)
 
 
 def weightedMedianImage(listOfFiles, crop, outfits):
@@ -44,7 +55,7 @@ def weightedMedianImage(listOfFiles, crop, outfits):
         if valuecolumn.size == 0:
             result[row, col] = np.nan 
         else:
-            result[row, col] = robustats.weighted_median(valuecolumn, weightcolumn)
+            result[row, col] = weightedMedian(valuecolumn, weightcolumn)
     if outfits:
         hdu = fits.PrimaryHDU(result)
         hdu.header = fits.open(listOfFiles[-1])[0].header 
