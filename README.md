@@ -9,10 +9,6 @@ Simply clone and install using pip:
   cd diffpanstarrs
   pip install .
 ```
-or simply install it from the PyPI repositories:
-```
-  pip install diffpanstarrs
-```
 Requires python ≥ 3.7.
 
 One must also have a working installation of sextractor. For now, sextractor must
