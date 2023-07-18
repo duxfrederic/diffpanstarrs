@@ -239,7 +239,7 @@ def excludeMissing(dirpath):
 
 def doDifferenceImagingPanSTARRS(sourcedir, name, kernel_size, object_extent,
                                  result, redo=False, channels=config.channels, debug=config.debug,
-                                 removecontaminants=False, config=config):
+                                 config=config):
     # make sure the output director exists
     outdir      = join(sourcedir, 'output')
     sexout      = join(outdir, 'Sextraction')
@@ -325,7 +325,7 @@ def doDifferenceImagingPanSTARRS(sourcedir, name, kernel_size, object_extent,
         refarray    = fits.getdata(reffiles[0])
         firstloop   = True
         refarraystack, refarraywtstack = [], []
-        while areThereNansInTheCenter(refarray, object_extent*3) or firstloop:
+        while firstloop or areThereNansInTheCenter(refarray, object_extent*3):
             # else we open more and more images and combine them:
             im         = fits.getdata(reffiles[j])
             mask, dim  = loadPanSTARRSauxiliary(reffiles[j], mask_outset=0)
@@ -343,7 +343,6 @@ def doDifferenceImagingPanSTARRS(sourcedir, name, kernel_size, object_extent,
             # this is when we give up.
             if j > len(reffiles)-1:
                 break
-            print(j)
             
         intensities = {}
         
@@ -371,7 +370,7 @@ def doDifferenceImagingPanSTARRS(sourcedir, name, kernel_size, object_extent,
                 print('\033[0m')
                 intensities[image] = np.nan, np.nan, np.nan
                 
-        # book keeping:
+        # book-keeping:
         saveIntensities(intensities, saved_csv_name=tosave_csv)
         result.light_curve_paths[channel] = tosave_csv
 
@@ -381,7 +380,7 @@ def downloadAndProcess(RA, DEC, hsize=512, workdir=None, name="unnamedregion",
                        kernel_size=None,
                        object_extent=None, \
                        redodiffimg=False, skipdownload=False,
-                       debug=None, removecontaminants=False, config=config):
+                       debug=None, config=config):
     """
        The pipeline that downloads and  processes a single region of the sky identified by its
        coordinates and size (hsize).
@@ -454,7 +453,6 @@ def downloadAndProcess(RA, DEC, hsize=512, workdir=None, name="unnamedregion",
                                  channels=channels,
                                  result=result,
                                  debug=debug,
-                                 removecontaminants=removecontaminants,
                                  config=config)
 
     return result
