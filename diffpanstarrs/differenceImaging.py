@@ -50,7 +50,7 @@ def buildStarMask(segfilepath, catfilepath, magnitude_threshold, mask_background
     if mask_background:
         starmask[ segmap == 0 ] = False
     # add more space around the stars as to prevent larger kernels from
-    # just pushing all the bad pixels outside of the mask
+    # just pushing all the bad pixels outside the mask
     starmask   = ndimage.binary_dilation(starmask,   iterations=4)
     toobrights = ndimage.binary_dilation(toobrights, iterations=1)
     # now, also mask the central object:
@@ -60,11 +60,12 @@ def buildStarMask(segfilepath, catfilepath, magnitude_threshold, mask_background
     toobrights[nx//2-radius:nx//2+radius, ny//2-radius:ny//2+radius] = False
     return starmask, toobrights
 
+
 def buildLSQMatrix(N, image, background=True):
     columns = []
-    maxval        = (N + 1) // 2 - 1 # by how much can we translate the refarray
+    maxval        = (N + 1) // 2 - 1  # by how much can we translate the refarray
     for bb in range(N):
-        for aa in range(N): # for each translation of the ref image
+        for aa in range(N):  # for each translation of the ref image
             column = np.roll(image, shift=(-maxval+bb,-maxval+aa), axis=(0,1))
             columns.append(column.flatten())
     # (constant) background row:
@@ -75,6 +76,7 @@ def buildLSQMatrix(N, image, background=True):
     # seem useful.
     fullmatrix = np.array(columns).T
     return fullmatrix
+
 
 def differenceImaging(infile, refarray, refarraystd, outdir, magnitude_threshold,\
                      kernel_size, object_extent, redo=False, plotintermediate=False):
@@ -119,8 +121,6 @@ def differenceImaging(infile, refarray, refarraystd, outdir, magnitude_threshold
     redo : bool, optional
         Whether to repeat the analysis if an ouptut file already exists (overwrite). 
         The default is False.
-    border : int, optional
-        the images are cropped by this number. The default is 1.
     plotintermediate : bool, optional
         Generates a plot of the kernel, the image, the difference image, etc. 
         Useful for debugging. The default is False.
@@ -145,7 +145,7 @@ def differenceImaging(infile, refarray, refarraystd, outdir, magnitude_threshold
         # load the image:
         targetfits   = fits.open(targetpath)[0]
         targetheader = targetfits.header
-        target       = targetfits.data#[border:-border, border:-border]
+        target       = targetfits.data
         
         # also load the masks and noise maps provided by
         # the panstarrs server.
@@ -238,7 +238,6 @@ def differenceImaging(infile, refarray, refarraystd, outdir, magnitude_threshold
         # eliminate all the bad pixels and burnt stars:
         diffimg[~notflatmask] = np.nan
         diffimg[toobrights]   = np.nan
-        
         
         del(fullmatrix)
         # now blur the weight map of the reference:

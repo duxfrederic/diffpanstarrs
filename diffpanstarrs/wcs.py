@@ -130,7 +130,7 @@ def rotate_header(oheader,angle):
 
     return header
 
-# Parse the relevent wcs headers
+# Parse the relevant wcs headers
 def parse_header(header):
     crval = scipy.array([header['crval1'],header['crval2']])
     crpix = scipy.array([header['crpix1'],header['crpix2']])
