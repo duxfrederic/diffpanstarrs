@@ -41,9 +41,9 @@ def weightedMedianImage(listOfFiles, crop, outfits):
             return result, outfits
         else:
             print("Cannot proceed without data or pre existing image")
-            raise ValueError 
+            raise ValueError
     stack = np.abs(stack)
-    ny, nx = stack[0].shape 
+    ny, nx = stack[0].shape
     result = np.zeros((ny, nx))
     for n in range(nx*ny):
         row, col = n//nx, n%nx
@@ -53,12 +53,12 @@ def weightedMedianImage(listOfFiles, crop, outfits):
         valuecolumn = valuecolumn[where]
         weightcolumn = weightcolumn[where]
         if valuecolumn.size == 0:
-            result[row, col] = np.nan 
+            result[row, col] = np.nan
         else:
             result[row, col] = weightedMedian(valuecolumn, weightcolumn)
     if outfits:
         hdu = fits.PrimaryHDU(result)
-        hdu.header = fits.open(listOfFiles[-1])[0].header 
+        hdu.header = fits.open(listOfFiles[-1])[0].header
         hdu.header.update(updatedwcs.to_header())
         hdu.writeto(outfits, overwrite=True)
     return result, outfits
@@ -82,14 +82,14 @@ def chooseBestImgPerNight(files: list):
         for seeing, chi2, file in zip(seeings, chi2s, nightfiles):
             if chi2 > 1e-2 and chi2 < 1.5 and seeing < 6 and seeing > 4:
                 chosenfiles.append(file)
-                break 
+                break
         else:
             chosenfiles.append(nightfiles[np.argmin(chi2)])
     if len(chosenfiles) == 0:
         raise FileNotFoundError("No image with the right criteria found.")
     return chosenfiles
-        
-            
+
+
 def dumpDefaultSextractorFiles():
     if not exists('default.param'):
         with open('default.param', 'w') as f:
@@ -99,7 +99,7 @@ def dumpDefaultSextractorFiles():
         with open('default.conv', 'w') as f:
             f.writelines(config.defaultconv)
         print(" ~~~~  Created a default.conv file for sextractor  ~~~~ ")
-        
+
 
 
 def loadPanSTARRSauxiliary(image_filename, mask_outset=-2):
@@ -107,31 +107,31 @@ def loadPanSTARRSauxiliary(image_filename, mask_outset=-2):
         given the base filename NAME.fits of an image,
         loads the noise map (NAME.wt.fits) and mask (NAME.mask.fits)
         and does some cleaning.
-        
+
             image_filename:     the main image path: "path/NAME.fits"
-            
+
             mask_outset:        errosion or dilatation of the mask, number of pixels
                                 to add to the borders.
     """
     mask_path   = image_filename.replace('.fits', '.mask.fits')
     weight_path = image_filename.replace('.fits', '.wt.fits')
-    
+
     mask   = fits.open(mask_path)[0].data
     weight = fits.open(weight_path)[0].data
-    
+
     mask[~np.isnan(mask)] = 0
     mask[np.isnan(mask)]  = 1
-    mask = mask.astype(np.bool)
+    mask = mask.astype(bool)
     if mask_outset > 0:
         mask = binary_erosion(mask, iterations=mask_outset)
     elif mask_outset < 0:
         mask = binary_dilation(mask, iterations=-mask_outset)
-    
+
     # the (inverse) weight maps are actually variance maps. We need the std.
-    std  = np.sqrt(weight) 
-    
+    std  = np.sqrt(weight)
+
     return mask, std
-    
+
 
 
 def extractDateTime(filename):
@@ -144,8 +144,8 @@ def extractDateTime(filename):
 
 
 def saveIntensities(intensities_dic, saved_csv_name):
-    w = csv.writer(open(saved_csv_name, "w")) 
-    
+    w = csv.writer(open(saved_csv_name, "w"))
+
     for image, (dintensity, intensity, chi2) in intensities_dic.items():
         time = fits.open(image)[0].header['MJD-OBS']
         w.writerow([basename(image), time, dintensity, intensity, chi2])
@@ -180,9 +180,9 @@ def findCloserThanSeeing(catfile, maxseeing, hsize, n=3):
     x, y        = x[bad], y[bad]
     sorting     = np.argsort(distances)
     return x[sorting][1:], y[sorting][1:], distances[sorting][1:], indices[sorting][1:]
-        
-    
-        
+
+
+
 def cropToCenter(array2D, npixels, wcs=None):
     centerx       = array2D.shape[0]//2
     centery       = array2D.shape[1]//2
@@ -202,8 +202,8 @@ def areThereNansInTheCenter(array2D, npixels=10):
         return True
     else:
         return False
-    
-    
+
+
 def binArray(array2d, ratio):
     assert ratio in [2**n for n in range(10)]
     ncol, nrow = array2d.shape
@@ -225,7 +225,7 @@ def binFitsFile(path, ratio, outpath=''):
     if not outpath:
         outpath = path.replace('.fits', f'_binned{ratio}x{ratio}.fits')
     fits.writeto(outpath, struct.data, struct.header, overwrite=1)
-    
+
 
 def loadDataArrayFromListOfFiles(listOfFiles, datetime=True):
     if datetime:
@@ -235,16 +235,16 @@ def loadDataArrayFromListOfFiles(listOfFiles, datetime=True):
             return {basename(f) : fits.open(f)[1].data for f in listOfFiles}
         except:
             return {basename(f) : fits.open(f)[0].data for f in listOfFiles}
-    
+
 
 def makeAverageOriginalImages(listOfFiles, crop, outfits):
     originals = [fits.open(f)[0].header['srcfile'] for f in listOfFiles]
     noisesf   = [f.replace('.fits', '.wt.fits') for f in originals]
-    
+
     images, noises = [], []
     w = astropywcs.WCS(originals[0])
     for diff, im, noise in zip(listOfFiles, originals, noisesf):
-        diff  = fits.open(diff)[0].data 
+        diff  = fits.open(diff)[0].data
         im    = fits.open(im)[0].data
         noise = fits.open(noise)[0].data**0.5
 
@@ -260,9 +260,9 @@ def makeAverageOriginalImages(listOfFiles, crop, outfits):
         images.append(im)
         noises.append(noise)
     images, noises = np.array(images), np.array(noises)
-    
+
     N_per_pixel    = np.sum(~np.isnan(images))
-    
+
     partition      = np.nansum(1/noises, axis=0)
     average        = np.nansum(np.abs(images) / noises, axis=0) / partition  / N_per_pixel
     # we will also need the noise map of this average:
@@ -274,13 +274,13 @@ def makeAverageOriginalImages(listOfFiles, crop, outfits):
         updatedwcs = cropToCenter(fits.open(listOfFiles[0])[0].data, crop, wcs=w).wcs
     else:
         updatedwcs = w
-    
+
     hdu        = fits.PrimaryHDU(average)
     hdu.header = fits.open(listOfFiles[0])[0].header
     hdu.header.update(updatedwcs.to_header())
     hdu.writeto(outfits.replace('.fits', '_originals_stack.fits'), overwrite=True)
     hdunoise   = fits.PrimaryHDU(noisemap**2)
-    hdunoise.header = hdu.header 
+    hdunoise.header = hdu.header
     hdunoise.writeto(outfits.replace('.fits', '_originals_stack.wt.fits'), overwrite=True)
     return average, noisemap
 
@@ -308,7 +308,7 @@ def loadStackOfDiffImg(listOfFiles, crop, outfits, normalize):
         else:
             return None, None
     w = astropywcs.WCS(f)
-    
+
     if crop:
         updatedwcs   = cropToCenter(listOfArrays[0], crop, wcs=w).wcs
         listOfArrays = [cropToCenter(a, crop) for a in listOfArrays]
@@ -319,12 +319,12 @@ def loadStackOfDiffImg(listOfFiles, crop, outfits, normalize):
     # the noise maps are not originally masked:
     noiseMaps[np.isnan(listOfArrays)] = np.nan
     noiseMaps[noiseMaps==0]           = np.nan
-    
+
     return listOfArrays, noiseMaps, updatedwcs
 
 
 
-def makeAbsoluteStackOfDiffImg(listOfFiles, crop=False, outfits=False, 
+def makeAbsoluteStackOfDiffImg(listOfFiles, crop=False, outfits=False,
                                normalize=False):
     try:
         listOfArrays, noiseMaps, updatedwcs = loadStackOfDiffImg(listOfFiles, crop, \
@@ -340,7 +340,7 @@ def makeAbsoluteStackOfDiffImg(listOfFiles, crop=False, outfits=False,
     varimage    = np.nansum(np.abs(listOfArrays)/noiseMaps, axis=0) / partition / N_per_pixel
     # now, we need the updated weights of the new stacked image:
     noisemap    = N_per_pixel / partition
-    
+
     # now, we might want to have this relative relative to the intensities
     # of the original image:
     if normalize:
@@ -350,18 +350,18 @@ def makeAbsoluteStackOfDiffImg(listOfFiles, crop=False, outfits=False,
         # now the variance map of the normalized variability image:
         # (introducing short names for convenience)
         ΔSD = noisemap # this is the variance map of the variability map
-        ΔSI = originals_stack_noisemap # this is the variance map of the stack of originals 
+        ΔSI = originals_stack_noisemap # this is the variance map of the stack of originals
         SI  = originals_stack # this is the stack of originals
         SD  = varimage # this is the variability image, Stack of Difference images
         dvarimagenorm = np.abs(np.sqrt(  np.abs( (ΔSD * (SI + ΔSI) - SD * ΔSI) / (SI + ΔSI)**2 ) ))
     if outfits:
         hdu = fits.PrimaryHDU(varimage)
-        hdu.header = fits.open(listOfFiles[-1])[0].header 
+        hdu.header = fits.open(listOfFiles[-1])[0].header
         hdu.header.update(updatedwcs.to_header())
         hdu.writeto(outfits, overwrite=True)
         # the variance map now:
         hduw = fits.PrimaryHDU(noisemap**2)
-        hduw.header = fits.open(listOfFiles[-1])[0].header 
+        hduw.header = fits.open(listOfFiles[-1])[0].header
         hduw.header.update(updatedwcs.to_header())
         hduw.writeto(outfits.replace('.fits', '.wt.fits'), overwrite=True)
         if normalize:
@@ -375,7 +375,7 @@ def makeAbsoluteStackOfDiffImg(listOfFiles, crop=False, outfits=False,
             dnormimagepath = normimagepath.replace('.fits', '.wt.fits')
             hduw.writeto(dnormimagepath, overwrite=True)
     return varimage, outfits
-    
+
 
 def clip(data, nsigma):
     """
@@ -450,12 +450,12 @@ def logChi2AndSeeing(outdir, diffimgfile, chi2, seeing):
         for line in r.readlines():
             file, _,  _ = line.split('\t')
             if not basename(file) == basename(diffimgfile):
-                lines.append(line) 
+                lines.append(line)
     lines.append(newline)
     with open(toopen, 'w') as f:
         for line in lines:
             f.writelines(line)
     return 0
 
-    
-    
+
+

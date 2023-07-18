@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-a module to detect and centroid sources and then perform a flux-conserving interpolation 
+a module to detect and centroid sources and then perform a flux-conserving interpolation
 of the data in the same fashion as the ISIS difference imaging software
 
 Cameron Lemon & Frederic Dux
@@ -33,13 +33,13 @@ def buildStarMask(segfilepath, catfilepath, magnitude_threshold, mask_background
     segmap       = fits.open(segfilepath)[0].data
     # get the id of the stars that are brighter than some magnitude threshold
     bright_ids   = np.where(magnitudes <  magnitude_threshold)
-    dim_ids      = np.where(magnitudes >= magnitude_threshold) 
+    dim_ids      = np.where(magnitudes >= magnitude_threshold)
     # build a mask
-    starmask     = np.ones_like(segmap, dtype=np.bool)
+    starmask     = np.ones_like(segmap, dtype=bool)
     # do not take stars that are too anisotropic (probably shouting stars)
     anisotropy_limit = 2
     # also save the stars that are too bright:
-    toobrights   = np.zeros_like(segmap, dtype=np.bool)
+    toobrights   = np.zeros_like(segmap, dtype=bool)
     for bright_id, bigaxis, smallaxis in zip(bright_ids[0], a[bright_ids], b[bright_ids]):
         starmask[ segmap == bright_id+1 ] = False
         if not ( bigaxis/smallaxis > anisotropy_limit or smallaxis/bigaxis > anisotropy_limit ):
@@ -82,11 +82,11 @@ def differenceImaging(infile, refarray, refarraystd, outdir, magnitude_threshold
                      kernel_size, object_extent, redo=False, plotintermediate=False):
     """
     Blurs the refarray image such that its PSF matches that of the image contained in 'infile'.
-    The refarray is convolved with a NxN kernel with the aim that the refarray and infile image 
+    The refarray is convolved with a NxN kernel with the aim that the refarray and infile image
     match in the sense of the weighted least squares of the sum of their pixel-wise difference.
     (χ² minimization. A successful minimization will often lead to χ^2 values << 1,
     because of the large number of degrees of freedom an NxN kernel contains.)
-    
+
     The brightest stars and the background are masked in the process, such that
     only the useful pixels (those covering 'healthy' stars) are used in the linear
     regression.
@@ -112,17 +112,17 @@ def differenceImaging(infile, refarray, refarraystd, outdir, magnitude_threshold
     magnitude_threshold : float
         magnitude under which the stars of the field should be masked.
     kernel_size : int
-        The size of the bluring kernel. The algorithm cost scales as N². 
-        odd number prefered such that a central pixel exists (no forced translation). 
+        The size of the bluring kernel. The algorithm cost scales as N².
+        odd number prefered such that a central pixel exists (no forced translation).
         The default is 15.
     object_extent : int
         how large is the (central) object of interest? The sum over a square
         of size object_extent is taken at the end of the procedure. The default is 20.
     redo : bool, optional
-        Whether to repeat the analysis if an ouptut file already exists (overwrite). 
+        Whether to repeat the analysis if an ouptut file already exists (overwrite).
         The default is False.
     plotintermediate : bool, optional
-        Generates a plot of the kernel, the image, the difference image, etc. 
+        Generates a plot of the kernel, the image, the difference image, etc.
         Useful for debugging. The default is False.
 
     Returns
@@ -140,20 +140,20 @@ def differenceImaging(infile, refarray, refarraystd, outdir, magnitude_threshold
     if not exists(targetpath):
         print(f" --> File {targetpath} has not been generated. Skipping.")
         return np.nan, np.nan
-    
+
     if not exists(diffoutname) or redo:
         # load the image:
         targetfits   = fits.open(targetpath)[0]
         targetheader = targetfits.header
         target       = targetfits.data
-        
+
         # also load the masks and noise maps provided by
         # the panstarrs server.
         targetmask, targetstd = loadPanSTARRSauxiliary(targetpath, mask_outset=-2)
         targetstd_copy = targetstd.copy()
 
-            
-            
+
+
         if plotintermediate:
             # useful when absurd things happen
             fig, ((ax1, ax2, ax5), (ax3, ax4, ax6)) = plt.subplots(2,3, figsize=(13,11), sharex='all', sharey='all')
@@ -174,7 +174,7 @@ def differenceImaging(infile, refarray, refarraystd, outdir, magnitude_threshold
             ax1.imshow(target, vmin=vmin, vmax=vmax, origin='lower', cmap=cmap)
             ax2.imshow(refarray, vmin=vmin, vmax=vmax, origin='lower', cmap=cmap)
             # plt.show comes later, the figure isn't complete yet
-    
+
         # start constructing the least square matrix
         refarray_copy = refarray.copy()
         refarray_copy[np.isnan(refarray_copy)] = 0
@@ -182,39 +182,39 @@ def differenceImaging(infile, refarray, refarraystd, outdir, magnitude_threshold
         std_copy[np.isnan(refarray_copy)] = 0
         N = kernel_size
         fullmatrix = buildLSQMatrix(N, refarray_copy)
-    
+
         # remove the edges since they cannot be used to constrain the convolution kernel
         yy, xx  = np.indices(np.shape(refarray))
-        yy, xx  = yy.flatten(), xx.flatten() 
+        yy, xx  = yy.flatten(), xx.flatten()
         k1      = np.where( (yy>yy.min()+N) & (yy<yy.max()-N) & (xx>xx.min()+N) & \
-                            (xx<xx.max()-N) )[0]                                     
+                            (xx<xx.max()-N) )[0]
         target2 = target.flatten()[k1]
-        
+
         # load the star map
         segfilepath   = join(outdir, 'Sextraction', basename(infile).replace('.fits', '_seg.fits'))
         catfilepath   = join(outdir, 'Sextraction', basename(infile).replace('.fits', '.cat'))
-        
-        
+
+
         # save a copy, useful at the end to eliminate the bad pixels from the difference
         # image:
         notflatmask   = targetmask.copy()
         targetmask = targetmask[N+1:-N-1, N+1:-N-1].flatten()
         targetstd  = targetstd[N+1:-N-1, N+1:-N-1].flatten()
-            
+
         # now building a star mask. brighstars2 will be kept in its original form and used
         # later to mask the very bright stars out of the difference images.
-        brightstars, toobrights = buildStarMask(segfilepath, catfilepath, magnitude_threshold, 
+        brightstars, toobrights = buildStarMask(segfilepath, catfilepath, magnitude_threshold,
                                                  mask_background=True, object_extent=object_extent)
         brightstars  = brightstars[N+1:-N-1, N+1:-N-1]
         # here removing the borders like we did with all the other images:
         shapeini     = brightstars.shape
         k            = brightstars.flatten()
-        
+
         # eliminate more pixels  using the target mask and the borders:
         k *= targetmask
         k *= ndimage.binary_erosion(~np.isnan(refarray.flatten()[k1]), iterations=5)
         targetstd = targetstd[k]
-            
+
         # now the least squares procedure. We weigh the columns of the matrix
         # and the image by the noise map.
         M       = fullmatrix[k1][k]
@@ -229,16 +229,16 @@ def differenceImaging(infile, refarray, refarraystd, outdir, magnitude_threshold
         x       = np.linalg.lstsq(M[notnan], target3[notnan], rcond=0.01)
         # now, the kernel is contained in x.
         # we perform the convolution to obtain the blured reference image newimg.
-        newimg  = np.dot(fullmatrix, x[0]).reshape(refarray.shape) 
+        newimg  = np.dot(fullmatrix, x[0]).reshape(refarray.shape)
         # restore the bad parts that cannot be used:
         newimg[np.isnan(refarray)] = np.nan
         # and the difference image is ........the difference.
         diffimg = newimg - target
-       
+
         # eliminate all the bad pixels and burnt stars:
         diffimg[~notflatmask] = np.nan
         diffimg[toobrights]   = np.nan
-        
+
         del(fullmatrix)
         # now blur the weight map of the reference:
         # (we don't add the background this time)
@@ -249,27 +249,27 @@ def differenceImaging(infile, refarray, refarraystd, outdir, magnitude_threshold
         newstd     = np.sqrt(newstd)
         newstd[np.isnan(refarray)] = np.nan
         newstd    /= x[0][:-1].sum()
-        
+
         diffstd = np.sqrt(targetstd_copy**2 + newstd**2) / 2**0.5
-        
+
         # for tracking, compute the score (count only the pixels that were
         # actually used in the minimization)
         score   = diffimg.flatten()[k1][k]/diffstd.flatten()[k1][k]
         # we will also need the number of pixels this represents:
         Npix    = (score[~np.isnan(score)]).size
         # to compute the reduced χ²
-        redχ2 = np.nansum(score**2)/(Npix-N**2) 
+        redχ2 = np.nansum(score**2)/(Npix-N**2)
         print(f"      Number of pixels elected for the minimization: {Npix}")
         print(f"      Number of pixels in the kernel: {N**2}")
         print(f"      {N}x{N} kernel reduced χ2 {redχ2:.2f}")
-        
-        # we write the combined uncertainties of the reference and of the 
+
+        # we write the combined uncertainties of the reference and of the
         # target image. This gives us a handy noise map for the resulting
         # difference image.
         hduwt        = fits.PrimaryHDU(diffstd**2)
         # (write the variance to be consistent with what they give us)q
         hduwt.writeto(diffwtoutname, overwrite=True)
-        
+
         if plotintermediate:
             # from matplotlib import rc
             # rc('font', **{'family': 'serif', 'serif': ['Computer Modern'], 'size'   : 10})
@@ -286,7 +286,7 @@ def differenceImaging(infile, refarray, refarraystd, outdir, magnitude_threshold
         # normalise the difference image so that it is on the same zeropoint as the
         # reference image (to construct lightcurve easily)
         diffimg  /= x[0].sum()
-        
+
         # now write the difference image. It will go along
         # its companion weight map saved earlier.
         hdu        = fits.PrimaryHDU(diffimg)
@@ -300,16 +300,16 @@ def differenceImaging(infile, refarray, refarraystd, outdir, magnitude_threshold
         # help the garbage collector since this matrix is huge.
         # I found it sometimes helps to explicitely discard huge objects.
         del(fullmatrix)
-    else: 
+    else:
         # if the difference image already exists and not setting "redo",
         # just load it:
         print(f"      Loading difference {diffoutname}\n")
         diffimg      = fits.open(diffoutname)[0].data
-    
-    
+
+
     diffimgcutout = cropToCenter(diffimg, object_extent//2)
     refcutout     = cropToCenter(refarray, object_extent//2)
-    
+
     if np.sum(np.isnan(diffimgcutout)) > diffimgcutout.size // 10:
         return np.nan, np.nan, redχ2
     # return the intensity of the difference as well as the intensity of the
