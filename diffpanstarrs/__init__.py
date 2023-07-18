@@ -11,5 +11,3 @@ from diffpanstarrs.utilities import makeAbsoluteStackOfDiffImg
 
 from diffpanstarrs.differenceImaging import differenceImaging
 from diffpanstarrs.pipeline import downloadAndProcess
-
-from diffpanstarrs.decider import decide

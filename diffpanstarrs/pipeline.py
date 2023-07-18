@@ -24,7 +24,6 @@ from    diffpanstarrs.utilities         import      saveIntensities, areThereNan
                                                     dumpDefaultSextractorFiles, chooseBestImgPerNight,\
                                                     recallDiffImgs, weightedMedianImage
 from    diffpanstarrs.config            import      config
-from    diffpanstarrs.decider           import      decide
 
 class DiffImgResult():
     """
@@ -187,20 +186,6 @@ class DiffImgResult():
              channels = self.channels
         self._plotImg(channels, crop, removenan, directory=self.workdir,\
                       absolutesum=False, savename=savename, headless=headless)
-
-    def lensedQuasarScore(self):
-        varscores, medianscores = {}, {}
-        if len(self.varimagesnormfiles) == 0:
-            print("No variability maps generated yet.")
-        else:
-            for channel, fitspath in self.varimagesnormfiles.items():
-                varscores[channel] = decide(fitspath)
-        if len(self.medianimagesfiles) == 0:
-            print("No Median maps generated yet.")
-        else:
-            for channel, fitspath in self.medianimagesfiles.items():
-                medianscores[channel] = decide(fitspath)
-        return {"varmapscore":varscores, "medianimagescore":medianscores}
 
     def _plotImg(self, channels, crop, removenan, directory, absolutesum,
                  savename, headless):
