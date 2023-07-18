@@ -14,6 +14,7 @@ try:
 except ImportError:
     import importlib_resources as pkg_resources
 
+
 class Config():
     def __repr__(self):
         msg = "############## extra parameters for diffpanstarrs: ##############\n"
@@ -23,6 +24,7 @@ class Config():
         msg += f"magnitude_threshold_star:\t {self.magnitude_threshold_star}\n"
         msg += "################################################################"
         return msg
+
     def __str__(self):
         return self.__repr__()
 
@@ -43,7 +45,3 @@ class Config():
     nprocessesdownload = min(os.cpu_count(), 10)
 
 config = Config()
-
-if not config.debug:
-    # while we're at it, let us suppress the useless tensorflow output:
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 

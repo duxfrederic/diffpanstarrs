@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-
+import argparse
 from diffpanstarrs.plotting import plotThisDirectory
-import  argparse
+
 
 def plot_this_directory():
     parser = argparse.ArgumentParser(description="Interactive plot of the images in a given directory")
